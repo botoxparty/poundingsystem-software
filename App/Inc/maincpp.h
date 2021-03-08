@@ -22,7 +22,10 @@ extern "C"
 
     typedef struct
     {
-        TIM_HandleTypeDef *tim1;
+        TIM_HandleTypeDef *encoder1;
+        TIM_HandleTypeDef *encoder2;
+        TIM_HandleTypeDef *encoder3;
+        TIM_HandleTypeDef *encoder4;
     } PS_Encoder_Timers;
 
     int maincpp(PS_Communication_Interface *comms, PS_Encoder_Timers *enc, LCD_GPIO *lcdGpio);
