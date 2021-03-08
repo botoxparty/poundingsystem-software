@@ -47,6 +47,7 @@ I2C_HandleTypeDef hi2c2;
 I2C_HandleTypeDef hi2c3;
 
 I2S_HandleTypeDef hi2s1;
+DMA_HandleTypeDef hdma_spi1_tx;
 
 RNG_HandleTypeDef hrng;
 
@@ -65,6 +66,7 @@ TIM_HandleTypeDef htim8;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_RNG_Init(void);
@@ -117,6 +119,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_I2C1_Init();
   MX_I2C2_Init();
   MX_RNG_Init();
@@ -131,10 +134,8 @@ int main(void)
   MX_I2C3_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_GPIO_WritePin(GPIOI, GPIO_PIN_1, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(GPIOH, GPIO_PIN_4, GPIO_PIN_SET);
-
-  HAL_GPIO_WritePin(FIRE_LED_GPIO_Port, FIRE_LED_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LCD_BL1_GPIO_Port, LCD_BL1_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LCD_BL2_GPIO_Port, LCD_BL2_Pin, GPIO_PIN_SET);
 
   // Start the Encoder Timers
   HAL_TIM_Base_Start_IT(&htim1);
@@ -409,7 +410,7 @@ static void MX_I2S1_Init(void)
   hi2s1.Init.Standard = I2S_STANDARD_PHILIPS;
   hi2s1.Init.DataFormat = I2S_DATAFORMAT_16B;
   hi2s1.Init.MCLKOutput = I2S_MCLKOUTPUT_ENABLE;
-  hi2s1.Init.AudioFreq = I2S_AUDIOFREQ_8K;
+  hi2s1.Init.AudioFreq = I2S_AUDIOFREQ_22K;
   hi2s1.Init.CPOL = I2S_CPOL_LOW;
   hi2s1.Init.FirstBit = I2S_FIRSTBIT_MSB;
   hi2s1.Init.WSInversion = I2S_WS_INVERSION_DISABLE;
@@ -750,6 +751,22 @@ static void MX_TIM8_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -773,16 +790,13 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(LCD_BL2_GPIO_Port, LCD_BL2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(FIRE_LED_GPIO_Port, FIRE_LED_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(FIRE_LED_GPIO_Port, FIRE_LED_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOI, LCD_BL1_Pin|LCD_CS_Pin|LCD_DC_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, GPIO_PIN_SET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(EEP_WP_GPIO_Port, EEP_WP_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, STATUS_LED_Pin|EEP_WP_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : LCD_BL2_Pin */
   GPIO_InitStruct.Pin = LCD_BL2_Pin;

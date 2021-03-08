@@ -1,6 +1,7 @@
 #include "audiocodec.h"
 #include "stm32h7xx_hal.h"
 
+uint8_t dmastatus;
 
 static uint16_t WM8978_REGVAL[58] =
     {
@@ -28,7 +29,6 @@ uint16_t AudioCodec::Read_Reg(uint8_t reg)
 
 uint8_t AudioCodec::Write_Reg(uint8_t reg, uint16_t val)
 {
-    uint8_t res;
     uint8_t RegAddr;
     uint8_t RegValue;
     RegAddr = (reg << 1) | ((uint8_t)((val >> 8) & 0x01)); //reg address + data highest bit
@@ -46,21 +46,22 @@ uint8_t AudioCodec::Write_Reg(uint8_t reg, uint16_t val)
                                                                                        //     /* Check the communication status */
     if (status != HAL_OK)
     {
-        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, GPIO_PIN_SET);
         // Error handling, for example re-initialization of the I2C peripheral
         // Error_Handler();
     }
 
     WM8978_REGVAL[reg] = val;
-    return res;
+    return status;
 }
 
 uint8_t AudioCodec::Init(void)
 {
     uint8_t Res;
     Res = Write_Reg(0, 0); //soft reset WM8978
-    if (Res)
+    if (Res != HAL_OK)
     {
+    	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, GPIO_PIN_SET);
         return 1; //reset failed, WM8978 exception
     }
 
@@ -93,7 +94,14 @@ uint8_t AudioCodec::Init(void)
     HPvol_Set(HP_Volume, HP_Volume);
     SPKvol_Set(SPK_Volume);
 
-    HAL_I2S_Transmit_DMA(i2s, (uint16_t *)&audiobuff[0], DMA_MAX((2 * BUFF_LEN) / AUDIODATA_SIZE)); // size must be in bytes
+    Res = HAL_I2S_Transmit_DMA(i2s, (uint16_t *)&audiobuff[0], DMA_MAX((2 * BUFF_LEN) / AUDIODATA_SIZE)); // size must be in bytes
+
+    if (Res != HAL_OK)
+      {
+    	dmastatus = Res;
+      	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, GPIO_PIN_SET);
+          return 1; //reset failed, WM8978 exception
+      }
     return 0;
 }
 

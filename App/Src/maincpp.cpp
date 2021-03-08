@@ -44,7 +44,7 @@ int maincpp(PS_Communication_Interface *comms, PS_Encoder_Timers *enc, LCD_GPIO 
   */
 void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-  if (hi2s->Instance == SPI2)
+  if (hi2s->Instance == SPI1)
   {
     /* Call the user function which will manage directly transfer complete */
     synth->make_sound((uint16_t *)(audiobuff + BUFF_LEN_DIV2), BUFF_LEN_DIV4);
@@ -58,7 +58,7 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
   */
 void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-  if (hi2s->Instance == SPI2)
+  if (hi2s->Instance == SPI1)
   {
     /* Manage the remaining file size and new address offset: This function should
        be coded by user (its prototype is already declared in stm32f4_discovery_audio.h) */
