@@ -26,10 +26,18 @@ extern "C"
         TIM_HandleTypeDef *encoder2;
         TIM_HandleTypeDef *encoder3;
         TIM_HandleTypeDef *encoder4;
+        TIM_HandleTypeDef *encoderNav;
     } PS_Encoder_Timers;
 
     int maincpp(PS_Communication_Interface *comms, PS_Encoder_Timers *enc, LCD_GPIO *lcdGpio);
     void EXTI15_10_IRQHandler(void);
+
+    void TIM1_CC_IRQHandler(void);
+    void TIM8_CC_IRQHandler(void);
+    void TIM3_IRQHandler(void);
+    void TIM4_IRQHandler(void);
+    void TIM5_IRQHandler(void);
+    void EXTI1_IRQHandler(void);
 
 #ifdef __cplusplus
 }

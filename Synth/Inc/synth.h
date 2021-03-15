@@ -36,9 +36,12 @@ public:
     float env;
     int currentNote;
     int velocity;
+    int frequency;
     Sounds sound;
     float generate_waveform(float freq);
     void make_sound(uint16_t *buf, uint16_t length);
+    void setCurrentNote(int note);
+    void setFreq(int freq);
     Oscillator osc1;
     Oscillator osc2;
     Oscillator osc3;

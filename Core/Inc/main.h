@@ -70,6 +70,7 @@ void Error_Handler(void);
 #define LCD_BL1_GPIO_Port GPIOI
 #define SW1_BTN_Pin GPIO_PIN_1
 #define SW1_BTN_GPIO_Port GPIOD
+#define SW1_BTN_EXTI_IRQn EXTI1_IRQn
 #define STATUS_LED_Pin GPIO_PIN_2
 #define STATUS_LED_GPIO_Port GPIOD
 #define EEP_WP_Pin GPIO_PIN_3

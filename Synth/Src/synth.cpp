@@ -1,4 +1,5 @@
 #include "synth.h"
+#include "delay.h"
 
 // Define the static Singleton pointer
 Synth *Synth::inst_ = NULL;
@@ -16,6 +17,7 @@ Synth *Synth::getInstance()
     return (inst_);
 }
 
+
 Synth::Synth()
 {
     static float f0 _CCM_;
@@ -24,19 +26,33 @@ Synth::Synth()
     autoFilterON = false;
     autoSound = 0;
     chorusON = false;
-    delayON = false;
+    delayON = true;
     phaserON = true;
     currentNote = 50;
     velocity = 127;
+    frequency = 1000;
     Oscillator osc1;
     Oscillator osc2;
     Oscillator osc3;
     Oscillator osc4;
+    Init();
+}
+
+void Synth::setCurrentNote(int note)
+{
+    currentNote = note;
+}
+
+void Synth::setFreq(int freq)
+{
+    frequency = freq;
 }
 
 void Synth::Init()
 {
-    // Delay_init();
+    Delay_init();
+    DelayWet_set(127);
+    DelayFeedback_set(120);
     // drifter_init();
     //	pitchGen_init();
     // sequencer_init();
@@ -79,7 +95,8 @@ void Synth::make_sound(uint16_t *buf, uint16_t length) // To be used with the Se
         // if (sequencerIsOn == true) {
         // 	sequencer_process(); //computes f0 and calls sequencer_newStep_action() and sequencer_newSequence_action()
         // } else {
-        f0 = notesFreq[currentNote];
+        // f0 = notesFreq[currentNote];
+        f0 = frequency;
         vol = (float)velocity / 127.0f;
         // }
 
@@ -116,8 +133,8 @@ void Synth::make_sound(uint16_t *buf, uint16_t length) // To be used with the Se
         //     0.5f * (SVF_calcSample(&SVFilter, y) + SVF_calcSample(&SVFilter2, y)); // Two filters in parallel
 
         /*---  Apply delay effect ----*/
-        // if (delayON)
-        //     y = Delay_compute(y);
+        if (delayON)
+            y = Delay_compute(y);
 
         // /*---  Apply phaser effect ----*/
         // if (phaserON)

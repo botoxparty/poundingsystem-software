@@ -3,8 +3,16 @@
 #include "menu.h"
 #include "audiocodec.h"
 #include "soundgenerator.h"
-#include<stdio.h>
+#include <stdio.h>
+#include <string.h>
+#include <string>
 
+extern TIM_HandleTypeDef htim1;
+extern TIM_HandleTypeDef htim3;
+extern TIM_HandleTypeDef htim4;
+extern TIM_HandleTypeDef htim5;
+int lastEncValue = 0;
+bool loadedTimer4 = false;
 /**
  *
  * Menus:
@@ -26,15 +34,14 @@ bool looping = true;
 extern uint8_t WM8978_SPK_Volume;
 extern AudioCodec *audio;
 
-char *intToChar(int i)
+char *intToChar(int data)
 {
-    int length = (log10(i) + 1);
+    std::string strData = std::to_string(data);
 
-    char chararray[length];
-    sprintf(chararray, "%d", i);
-    chararray[length] = '\0';
+    char *temp = new char[strData.length() + 1];
+    strcpy(temp, strData.c_str());
 
-    return chararray;
+    return temp;
 }
 
 MenuSystem::MenuSystem(LCD *hlcd)
@@ -72,7 +79,7 @@ void MenuSystem::RefreshMenu(void)
     if (scrollMode)
     {
         lcd->invertText(true);
-        lcd->print("<            >", 0, 5);
+        lcd->print((char *)"<            >", 0, 5);
         lcd->invertText(false);
     }
 }
@@ -146,8 +153,11 @@ void MenuSystem::MenuSelect(void)
 /**
   * @brief Go to next/prev menu page.
   */
-void MenuSystem::TriggerEncoder(bool direction)
+void MenuSystem::TriggerScrollEncoder(TIM_HandleTypeDef *timer)
 {
+
+    bool direction = lastEncValue > timer->Instance->CNT;
+
     if (scrollMode)
     {
         int newmenu = (int)currentMenu;
@@ -190,6 +200,7 @@ void MenuSystem::TriggerEncoder(bool direction)
         }
     }
     RefreshMenu();
+    lastEncValue = timer->Instance->CNT;
 }
 
 void MenuSystem::TriggerPushEncoder()
@@ -202,11 +213,27 @@ void MenuSystem::TriggerPushEncoder()
   */
 void MenuSystem::EncoderCallback(TIM_HandleTypeDef *timer)
 {
-    timer->Instance->CNT;
+    int value = timer->Instance->CNT;
+
     switch (currentMenu)
     {
     case MAIN_MENU:
+        if (timer == &htim4)
+        {
+            if (loadedTimer4 == false)
+            {
+                loadedTimer4 = true;
+                return;
+            }
+            int val = map(value, 0, 1024, 27, 12000);
 
+            char file[80];
+            char *title = "Freq    ";
+            char *numb = intToChar(val);
+            sprintf(file, "%s%s", title, numb);
+            lcd->print(file, 0, 1);
+            synth->setFreq(val);
+        }
         break;
     }
 }
@@ -222,35 +249,35 @@ void MenuSystem::MainMenu()
     {
     case 0:
         lcd->print(SoundGenerator::soundNames[synth->sound], 0, 0);
-        lcd->print("Freq       440", 0, 1);
-        lcd->print("Mod        100", 0, 2);
-        lcd->print("Rate      1200", 0, 3);
-        lcd->print("- - - -       ", 0, 4);
-        lcd->print("         MIXER", 0, 5);
+        lcd->print((char *)"Freq       440", 0, 1);
+        lcd->print((char *)"Mod        100", 0, 2);
+        lcd->print((char *)"Rate      1200", 0, 3);
+        lcd->print((char *)"- - - -       ", 0, 4);
+        lcd->print((char *)"         MIXER", 0, 5);
         lcd->invertText(true);
-        lcd->print("<  >", 0, 5);
+        lcd->print((char *)"<  >", 0, 5);
         lcd->invertText(false);
         break;
     case 1:
         lcd->print(SoundGenerator::soundNames[synth->sound], 0, 0);
-        lcd->print("Freq       440", 0, 1);
-        lcd->print("Mod        100", 0, 2);
-        lcd->print("Rate      1200", 0, 3);
-        lcd->print("- - - -       ", 0, 4);
-        lcd->print("<  >", 0, 5);
+        lcd->print((char *)"Freq       440", 0, 1);
+        lcd->print((char *)"Mod        100", 0, 2);
+        lcd->print((char *)"Rate      1200", 0, 3);
+        lcd->print((char *)"- - - -       ", 0, 4);
+        lcd->print((char *)"<  >", 0, 5);
         lcd->invertText(true);
-        lcd->print("MIXER", 54, 5);
+        lcd->print((char *)"MIXER", 54, 5);
         lcd->invertText(false);
         break;
     case 2:
         lcd->invertText(true);
         lcd->print(SoundGenerator::soundNames[synth->sound], 0, 0);
         lcd->invertText(false);
-        lcd->print("Freq       440", 0, 1);
-        lcd->print("Mod        100", 0, 2);
-        lcd->print("Rate      1200", 0, 3);
-        lcd->print("- - - -       ", 0, 4);
-        lcd->print("<  >     MIXER", 0, 5);
+        lcd->print((char *)"Freq       440", 0, 1);
+        lcd->print((char *)"Mod        100", 0, 2);
+        lcd->print((char *)"Rate      1200", 0, 3);
+        lcd->print((char *)"- - - -       ", 0, 4);
+        lcd->print((char *)"<  >     MIXER", 0, 5);
         break;
     default:
         break;
@@ -268,15 +295,15 @@ void MenuSystem::MixerMenu()
     lcd->refreshScr();
 
     lcd->invertText(true);
-    lcd->print("             X", 0, 0);
+    lcd->print((char *)"             X", 0, 0);
     lcd->invertText(false);
-    lcd->print("MIXER        ", 0, 0);
-    lcd->print("Headphones   ", 0, 2);
+    lcd->print((char *)"MIXER        ", 0, 0);
+    lcd->print((char *)"Headphones   ", 0, 2);
     lcd->print(intToChar(audio->HP_Volume), 60, 1);
-    lcd->print("LineOut      ", 0, 3);
+    lcd->print((char *)"LineOut      ", 0, 3);
     lcd->print(intToChar(audio->SPK_Volume), 60, 2);
-    lcd->print("LineIn      --", 0, 4);
-    lcd->print("Mic         --", 0, 5);
+    lcd->print((char *)"LineIn      --", 0, 4);
+    lcd->print((char *)"Mic         --", 0, 5);
 }
 
 /**
@@ -291,7 +318,7 @@ void MenuSystem::SoundMenu()
 
     lcd->drawHLine(0, 8, 83);
     lcd->refreshScr();
-    lcd->print("SOUND        X", 0, 0);
+    lcd->print((char *)"SOUND        X", 0, 0);
 
     for (int i = activeItem < 5 ? 0 : activeItem - 4, j = 1; j < 6; i++, j++)
     {
@@ -314,13 +341,13 @@ void MenuSystem::DelayMenu()
 {
     lcd->drawHLine(0, 8, 83);
     lcd->refreshScr();
-    lcd->print("DELAY         ", 0, 0);
+    lcd->print((char *)"DELAY         ", 0, 0);
     //  lcd->goXY(0,20);
-    lcd->print("Speed       90", 0, 1);
-    lcd->print("Feedback   100", 0, 2);
-    lcd->print("Filter      --", 0, 3);
-    lcd->print("            --", 0, 4);
-    lcd->print("<  >     MIXER", 0, 5);
+    lcd->print((char *)"Speed       90", 0, 1);
+    lcd->print((char *)"Feedback   100", 0, 2);
+    lcd->print((char *)"Filter      --", 0, 3);
+    lcd->print((char *)"            --", 0, 4);
+    lcd->print((char *)"<  >     MIXER", 0, 5);
 }
 
 /**
@@ -334,15 +361,15 @@ void MenuSystem::OscMenu()
     lcd->refreshScr();
 
     lcd->invertText(true);
-    lcd->print("             X", 0, 0);
+    lcd->print((char *)"             X", 0, 0);
     lcd->invertText(false);
-    lcd->print("OSC1         ", 0, 0);
-    lcd->print("Freq         ", 0, 2);
+    lcd->print((char *)"OSC1         ", 0, 0);
+    lcd->print((char *)"Freq         ", 0, 2);
     lcd->print(intToChar(audio->HP_Volume), 60, 1);
-    lcd->print("LineOut      ", 0, 3);
+    lcd->print((char *)"LineOut      ", 0, 3);
     lcd->print(intToChar(audio->SPK_Volume), 60, 2);
-    lcd->print("LineIn      --", 0, 4);
-    lcd->print("Mic         --", 0, 5);
+    lcd->print((char *)"LineIn      --", 0, 4);
+    lcd->print((char *)"Mic         --", 0, 5);
 }
 
 /**
@@ -353,19 +380,19 @@ void MenuSystem::MenuFooter()
     switch (activeItem)
     {
     case 0:
-        lcd->print("         MIXER", 0, 5);
+        lcd->print((char *)"         MIXER", 0, 5);
         lcd->invertText(true);
-        lcd->print("<  >", 0, 5);
+        lcd->print((char *)"<  >", 0, 5);
         lcd->invertText(false);
         break;
     case 1:
-        lcd->print("<  >", 0, 5);
+        lcd->print((char *)"<  >", 0, 5);
         lcd->invertText(true);
-        lcd->print("MIXER", 54, 5);
+        lcd->print((char *)"MIXER", 54, 5);
         lcd->invertText(false);
         break;
     default:
-        lcd->print("<  >     MIXER", 0, 5);
+        lcd->print((char *)"<  >     MIXER", 0, 5);
         break;
     }
 }

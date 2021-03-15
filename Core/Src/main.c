@@ -51,9 +51,9 @@ DMA_HandleTypeDef hdma_spi1_tx;
 
 RNG_HandleTypeDef hrng;
 
+TIM_HandleTypeDef htim1;
 SPI_HandleTypeDef hspi4;
 
-TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim5;
@@ -146,6 +146,8 @@ int main(void)
   HAL_TIM_Encoder_Start_IT(&htim4, TIM_CHANNEL_ALL);
   HAL_TIM_Base_Start_IT(&htim5);
   HAL_TIM_Encoder_Start_IT(&htim5, TIM_CHANNEL_ALL);
+  HAL_TIM_Base_Start_IT(&htim8);
+  HAL_TIM_Encoder_Start_IT(&htim8, TIM_CHANNEL_ALL);
 
   PS_Communication_Interface comms;
   comms.i2c = &hi2c2;
@@ -157,6 +159,7 @@ int main(void)
   enc.encoder2 = &htim3;
   enc.encoder3 = &htim4;
   enc.encoder4 = &htim5;
+  enc.encoderNav = &htim8;
 
   LCD_GPIO lcd;
   lcd.CEPORT = LCD_CS_GPIO_Port;
@@ -707,7 +710,7 @@ static void MX_TIM8_Init(void)
   htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim8.Init.RepetitionCounter = 0;
   htim8.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
+  sConfig.EncoderMode = TIM_ENCODERMODE_TI12;
   sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
   sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
@@ -816,7 +819,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : SW1_BTN_Pin */
   GPIO_InitStruct.Pin = SW1_BTN_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(SW1_BTN_GPIO_Port, &GPIO_InitStruct);
 
@@ -826,6 +829,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
 }
 
